@@ -2,7 +2,7 @@ from telegram import Update
 from telegram.ext import Updater, MessageHandler, Filters, CallbackContext
 
 # Replace 'YOUR_BOT_TOKEN' with your actual bot token
-BOT_TOKEN = 'YOUR_BOT_TOKEN'
+BOT_TOKEN = '7256179302:AAEDk58-AphBlxcey5DYgFGMyh2yuNr_17U'
 
 def get_chat_id(update: Update, context: CallbackContext):
     chat_id = update.message.chat_id
