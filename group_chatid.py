@@ -3,9 +3,9 @@ from telegram import Update, Bot
 from telegram.ext import Dispatcher, MessageHandler, Filters, CallbackContext
 
 # Replace 'YOUR_BOT_TOKEN' with your actual bot token
-BOT_TOKEN = 'YOUR_BOT_TOKEN'
+BOT_TOKEN = '7256179302:AAEDk58-AphBlxcey5DYgFGMyh2yuNr_17U'
 # Replace 'YOUR_SERVER_URL' with your actual server URL
-WEBHOOK_URL = f"https://YOUR_SERVER_URL/{BOT_TOKEN}"
+WEBHOOK_URL = f"https://group-chatid.onrender.com/{BOT_TOKEN}"
 
 app = Flask(__name__)
 bot = Bot(token=BOT_TOKEN)
