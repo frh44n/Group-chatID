@@ -1,34 +1,27 @@
-from flask import Flask, request
-from telegram import Update, Bot
-from telegram.ext import Dispatcher, MessageHandler, Filters, CallbackContext
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, CallbackContext, MessageHandler, Filters
 
-# Replace 'YOUR_BOT_TOKEN' with your actual bot token
-BOT_TOKEN = '7256179302:AAEDk58-AphBlxcey5DYgFGMyh2yuNr_17U'
-# Replace 'YOUR_SERVER_URL' with your actual server URL
-WEBHOOK_URL = f"https://group-chatid.onrender.com/{BOT_TOKEN}"
+# Replace 'YOUR_BOT_TOKEN' with your bot's token
+TOKEN = 'YOUR_BOT_TOKEN'
 
-app = Flask(__name__)
-bot = Bot(token=BOT_TOKEN)
-dispatcher = Dispatcher(bot, None, workers=0, use_context=True)
+def start(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text('Hello! I am your bot.')
 
-def get_chat_id(update: Update, context: CallbackContext):
-    chat_id = update.message.chat_id
-    print(f"Chat ID: {chat_id}")
-    update.message.reply_text(f"Chat ID: {chat_id}")
+def handle_chat_member_update(update: Update, context: CallbackContext) -> None:
+    chat_member = update.chat_member
+    if chat_member.new_chat_member.status == 'administrator' and chat_member.new_chat_member.user.id == context.bot.id:
+        chat_id = update.effective_chat.id
+        context.bot.send_message(chat_id=chat_id, text=f'Hello! I am now an admin. The chat ID is {chat_id}.')
 
-# Add a handler to get messages
-dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, get_chat_id))
+def main() -> None:
+    updater = Updater(TOKEN)
+    dispatcher = updater.dispatcher
 
-@app.route(f'/{BOT_TOKEN}', methods=['POST'])
-def webhook_handler():
-    update = Update.de_json(request.get_json(), bot)
-    dispatcher.process_update(update)
-    return "ok"
+    dispatcher.add_handler(CommandHandler('start', start))
+    dispatcher.add_handler(MessageHandler(Filters.status_update.new_chat_members, handle_chat_member_update))
 
-@app.route('/set_webhook', methods=['GET'])
-def set_webhook():
-    bot.set_webhook(url=WEBHOOK_URL)
-    return "Webhook set successfully"
+    updater.start_polling()
+    updater.idle()
 
-if __name__ == "__main__":
-    app.run(port=5000)
+if __name__ == '__main__':
+    main()
