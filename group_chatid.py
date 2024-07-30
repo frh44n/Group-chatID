@@ -1,27 +1,50 @@
-from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext, MessageHandler, Filters
+from flask import Flask, request
+from telegram import Update, Bot
+from telegram.ext import Dispatcher, CommandHandler, MessageHandler, Filters
+import logging
+import os
 
-# Replace 'YOUR_BOT_TOKEN' with your bot's token
-TOKEN = '7123164538:AAFgHI0NrqbNMEFeduQm0sGNjXL9FfNDxgM'
+# Enable logging
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
-def start(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text('Hello! I am your bot.')
+TOKEN = os.environ.get('TELEGRAM_TOKEN')
+URL = os.environ.get('URL')
 
-def handle_chat_member_update(update: Update, context: CallbackContext) -> None:
-    chat_member = update.chat_member
-    if chat_member.new_chat_member.status == 'administrator' and chat_member.new_chat_member.user.id == context.bot.id:
-        chat_id = update.effective_chat.id
-        context.bot.send_message(chat_id=chat_id, text=f'Hello! I am now an admin. The chat ID is {chat_id}.')
+# Initialize bot and dispatcher
+bot = Bot(token=TOKEN)
+app = Flask(__name__)
 
-def main() -> None:
-    updater = Updater(TOKEN)
-    dispatcher = updater.dispatcher
+# Create a dispatcher
+dispatcher = Dispatcher(bot, None, use_context=True)
 
-    dispatcher.add_handler(CommandHandler('start', start))
-    dispatcher.add_handler(MessageHandler(Filters.status_update.new_chat_members, handle_chat_member_update))
+# Define the start function
+def start(update: Update, context):
+    update.message.reply_text('Hello! I will notify the group when I become an admin.')
 
-    updater.start_polling()
-    updater.idle()
+# Define the handler for new chat members
+def new_chat_members(update: Update, context):
+    for new_member in update.message.new_chat_members:
+        if new_member.id == context.bot.id:
+            group_id = update.message.chat.id
+            context.bot.send_message(chat_id=group_id, text=f'Thank you for promoting me to admin! The group ID is {group_id}.')
+
+# Add handlers to the dispatcher
+dispatcher.add_handler(CommandHandler("start", start))
+dispatcher.add_handler(MessageHandler(Filters.status_update.new_chat_members, new_chat_members))
+
+# Define the route for webhook
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    update = Update.de_json(request.get_json(force=True), bot)
+    dispatcher.process_update(update)
+    return 'ok'
+
+# Set webhook
+bot.set_webhook(f'{URL}/webhook')
 
 if __name__ == '__main__':
-    main()
+    app.run(host='0.0.0.0', port=5000)
